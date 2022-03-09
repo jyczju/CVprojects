@@ -76,12 +76,17 @@ if __name__ == '__main__':
     # 计算处理后图像的直方图
     new_hist = Img_Hist(new_img)
 
-    cv2.imshow('origin_image',img)
-    cv2.imshow('new_image',new_img)
+    # cv2.imshow('origin_image',img)
+    # cv2.imshow('new_image',new_img)
     cv2.imwrite('new_image.jpg', new_img)
 
-    # 绘制灰度直方图
     plt.figure(1)
+
+    plt.subplot(121),plt.imshow(img, cmap=plt.cm.gray),plt.title('origin_image',fontdict={'weight':'normal','size': 20}), plt.axis('off') #坐标轴关闭
+    plt.subplot(122),plt.imshow(new_img, cmap=plt.cm.gray),plt.title('new_image',fontdict={'weight':'normal','size': 20}), plt.axis('off') #坐标轴关闭
+
+    # 绘制灰度直方图
+    plt.figure(2)
     plt.subplot( 1, 2, 1 )
     plt.plot(np.arange(256), origin_hist, 'r', linewidth=1.5, c='black')
     plt.tick_params(labelsize=15)
