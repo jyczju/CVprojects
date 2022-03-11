@@ -31,6 +31,13 @@ def Equal_Hist(hist, img):
     输出：处理后图像
     '''
     Tr = Cal_Tr(hist, img) # 计算Tr
+
+    # plt.figure(0)
+    # plt.plot(np.arange(256), Tr, 'r', linewidth=1.5, c='black')
+    # plt.tick_params(labelsize=15)
+    # plt.title("Tr",fontdict={'weight':'normal','size': 20})
+    # plt.xlabel("Histogram",fontdict={'weight':'normal','size': 15})
+    # plt.ylabel("Tr",fontdict={'weight':'normal','size': 15})
     
     new_img = np.zeros(shape=(img.shape[0],img.shape[1]),dtype=np.uint8)
     
