@@ -14,7 +14,6 @@ def cv2AddChineseText(img, text, position, textColor=(0, 0, 0), textSize=30):
     # 转换回OpenCV格式
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
-
 img = cv2.imread('DSC04229.jpg', cv2.IMREAD_COLOR)
 img_text=img.copy()
 
@@ -23,7 +22,7 @@ img_text=img.copy()
 img_text = cv2AddChineseText(img_text, "姓名:蒋颜丞" ,  (10, 10), textColor=(0, 0, 0), textSize=40)
 img_text = cv2AddChineseText(img_text, "学号:3190102563" ,  (10, 60), textColor=(0, 0, 0), textSize=40)
 
-
 cv2.imshow('image', img_text)
+cv2.imwrite('img_text.jpg', img_text)
 K = cv2.waitKey(0)
 

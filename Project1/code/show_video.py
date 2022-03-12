@@ -15,6 +15,7 @@ def cv2AddChineseText(img, text, position, textColor=(0, 0, 0), textSize=30):
     return cv2.cvtColor(np.asarray(img), cv2.COLOR_RGB2BGR)
 
 cap=cv2.VideoCapture("video.mp4")
+saver = cv2.VideoWriter("video_text.avi",cv2.VideoWriter_fourcc(*'XVID'),24,(int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))))
 
 # 循环读取图片
 while cap.isOpened():
@@ -25,6 +26,7 @@ while cap.isOpened():
         # frame = cv2AddChineseText(frame, "姓名:蒋颜丞" ,  (10, 110), textColor=(255, 255, 255), textSize=40)
         # frame = cv2AddChineseText(frame, "学号:3190102563" ,  (10, 160), textColor=(255, 255, 255), textSize=40)
         cv2.imshow("video", frame)
+        saver.write(frame)
 
     else:
         print("视频播放完成！")
