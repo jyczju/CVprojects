@@ -23,8 +23,8 @@ while cap.isOpened():
     if ret:
         frame = cv2AddChineseText(frame, "姓名:蒋颜丞" ,  (10, 90), textColor=(255, 255, 255), textSize=40)
         frame = cv2AddChineseText(frame, "学号:3190102563" ,  (10, 140), textColor=(255, 255, 255), textSize=40)
-        # frame = cv2AddChineseText(frame, "姓名:蒋颜丞" ,  (10, 110), textColor=(255, 255, 255), textSize=40)
-        # frame = cv2AddChineseText(frame, "学号:3190102563" ,  (10, 160), textColor=(255, 255, 255), textSize=40)
+        # cv2.putText(frame, 'Name:Jiang Yancheng', (10, 110),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA, 0)
+        # cv2.putText(frame, 'ID number:3190102563', (10, 150),cv2.FONT_HERSHEY_COMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA, 0)
         cv2.imshow("video", frame)
         saver.write(frame)
 
@@ -36,6 +36,6 @@ while cap.isOpened():
     key = cv2.waitKey(25)
     if key == 27:  # 按键esc
         break
-
+    
 cap.release()
 cv2.destroyAllWindows()
