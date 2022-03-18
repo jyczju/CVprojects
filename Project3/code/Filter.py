@@ -140,8 +140,8 @@ if __name__ == '__main__':
 
     # 双边滤波
     img_bf_guass=bf_Filter(img_guass,(3,3),100,100**2)
-    cv2.imshow("img_guass_bf", img_bf_guass)
-    cv2.imwrite("img_guass_bf.jpg", img_bf_guass)
+    cv2.imshow("img_bf_guass", img_bf_guass)
+    cv2.imwrite("img_bf_guass.jpg", img_bf_guass)
     img_bf_guass_cv=cv2.bilateralFilter(img_guass,3,100,15)
     cv2.imshow("img_bf_guass_cv", img_bf_guass_cv)
     cv2.imwrite("img_bf_guass_cv.jpg", img_bf_guass_cv)
