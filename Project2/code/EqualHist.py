@@ -4,7 +4,6 @@ jyczju
 2022/3/9 v1.0
 '''
 import cv2
-from PIL import Image, ImageDraw, ImageFont
 import numpy as np
 import matplotlib.pyplot as plt
 
