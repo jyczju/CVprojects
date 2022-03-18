@@ -1,11 +1,20 @@
+'''
+对高斯噪声和椒盐噪声进行均值滤波、中值滤波和双边滤波
+浙江大学控制学院《数字图像处理与机器视觉》第一次上机实践
+jyczju
+2022/3/18 v1.0
+'''
 import cv2
 import numpy as np
 import math
 import matplotlib.pyplot as plt
 
-
-def add_noise_Guass(img, mean=0, var=30**2):  # 添加高斯噪声
-    
+def add_noise_Guass(img, mean=0, var=30**2):
+    '''
+    添加高斯噪声
+    输入：灰度图像，高斯噪声均值，高斯噪声方差
+    输出：添加高斯噪声后的图像
+    '''
     noise = np.random.normal(mean, var ** 0.5, img.shape) # 生成噪声
     img = img + noise # 加入噪声
     img_guass = np.clip(img, 0, 255) # 防止值超限
@@ -14,7 +23,11 @@ def add_noise_Guass(img, mean=0, var=30**2):  # 添加高斯噪声
 
 
 def add_noise_SP(img, SNR=0.6):
-    '''SNR为信噪比，在0~1之间'''
+    '''
+    添加椒盐噪声
+    输入：灰度图像，信噪比（0~1之间）
+    输出：添加椒盐噪声后的图像
+    '''
     SP = int((img.shape[0]*img.shape[1])*(1-SNR)) # 计算椒盐噪声个数
     for i in range(SP):
         randx=np.random.randint(1,img.shape[0]-1)   # 生成一个 1 至 hight-1 之间的随机整数
@@ -26,49 +39,54 @@ def add_noise_SP(img, SNR=0.6):
     return img
 
 def mean_Filter(img, size=(5,5)):
-    kernal = np.ones(size, np.float32)/size[0]/size[1]
-    # 这里用numpy创建一个5*5的单位阵，ones表示这是单位阵，np.float32表示数据的格式是浮点32型。
-    # 最后单位阵的每个元素再除以25（5*5），整个滤波器表示对一个5*5的矩阵上的数进行平均求和
+    '''
+    均值滤波
+    输入：灰度图像，模板尺寸
+    输出：均值滤波后的图像
+    '''
+    kernal = np.ones(size, np.float32)/size[0]/size[1] # 模板
     h = img.shape[0]
     w = img.shape[1]
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
-            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)]
-            img[x][y] = np.sum(window*kernal)
+            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
+            img[x][y] = np.sum(window*kernal) # 对各点进行模板操作
     return img
 
 def mid_Filter(img, size=(5,5)):
+    '''
+    中值滤波
+    输入：灰度图像，模板尺寸
+    输出：中值滤波后的图像
+    '''
     h = img.shape[0]
     w = img.shape[1]
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
-            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)]
-            img[x][y] = np.median(window)
+            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
+            img[x][y] = np.median(window) # 对各点进行模板操作
     return img
 
     
 def bf_Filter(img, size=(5,5), sigma_s = 10, sigma_r = 10):
-    # https://blog.csdn.net/u013921430/article/details/84532068
-    kernal = np.ones(size, np.float32)
+    '''
+    双边滤波
+    输入：灰度图像，模板尺寸，空间域方差，像素值域方差
+    输出：双边滤波后的图像
+    '''
+    kernal = np.ones(size, np.float32) # 模板初始化
     h = img.shape[0]
     w = img.shape[1]
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
-            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)]
+            window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
             for i in range(size[0]):
                 for j in range(size[1]):
-                    # print(i,j)
                     dist = ((i-(size[0]-1)/2)**2+(j-(size[0]-1)/2)**2)/2/sigma_s
-                    # print(window[i][j] , window[int((size[0]-1)/2)][int((size[1]-1)/2)])
                     dValue = ((float(window[i][j]) - float(window[int((size[0]-1)/2)][int((size[1]-1)/2)]))**2)/2/sigma_r
-                    # print(dValue)
-                    kernal[i][j] = math.exp(-dist)*math.exp(-dValue)
-            kernal /= np.sum(kernal)
-            # print(kernal)    
-            
-            img[x][y] = np.sum(window*kernal)
-
-            # print(img[x][y])
+                    kernal[i][j] = math.exp(-dist)*math.exp(-dValue) # 计算模板权重
+            kernal /= np.sum(kernal) # 权重归一化
+            img[x][y] = np.sum(window*kernal) # 对各点进行模板操作
     return img
 
 
@@ -78,10 +96,12 @@ if __name__ == '__main__':
     img = cv2.imread('GrayPhoto.jpg', cv2.IMREAD_GRAYSCALE)
     # cv2.imshow("img", img)
 
+    # 对原图像添加高斯噪声
     img_guass = add_noise_Guass(img, 0, 30**2)
     cv2.imshow("img_guass", img_guass)
     cv2.imwrite('img_guass.jpg', img_guass)
 
+    # 对原图像添加椒盐噪声
     img_SP = add_noise_SP(img, 0.92)
     cv2.imshow("img_SP", img_SP)
     cv2.imwrite('img_SP.jpg', img_SP)
