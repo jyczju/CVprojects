@@ -150,36 +150,36 @@ if __name__ == '__main__':
     cv2.imshow("img_SP", img_SP)
     cv2.imwrite('img_SP.jpg', img_SP)
 
-    # # 均值滤波
-    # img_mean_guass_cv = cv2.blur(img_guass, (5,5))
-    # cv2.imshow("img_mean_guass_cv", img_mean_guass_cv)
-    # cv2.imwrite("img_mean_guass_cv.jpg", img_mean_guass_cv)
-    # img_mean_guass = mean_Filter(img_guass, (5,5))
-    # cv2.imshow("img_mean_guass", img_mean_guass)
-    # cv2.imwrite("img_mean_guass.jpg", img_mean_guass)
+    # 均值滤波
+    img_mean_guass_cv = cv2.blur(img_guass, (5,5))
+    cv2.imshow("img_mean_guass_cv", img_mean_guass_cv)
+    cv2.imwrite("img_mean_guass_cv.jpg", img_mean_guass_cv)
+    img_mean_guass = mean_Filter(img_guass, (5,5))
+    cv2.imshow("img_mean_guass", img_mean_guass)
+    cv2.imwrite("img_mean_guass.jpg", img_mean_guass)
 
-    # img_mean_SP_cv = cv2.blur(img_SP, (5,5))
-    # cv2.imshow("img_mean_SP_cv", img_mean_SP_cv)
-    # cv2.imwrite("img_mean_SP_cv.jpg", img_mean_SP_cv)
-    # img_mean_SP = mean_Filter(img_SP, (5,5))
-    # cv2.imshow("img_mean_SP", img_mean_SP)
-    # cv2.imwrite("img_mean_SP.jpg", img_mean_SP)
+    img_mean_SP_cv = cv2.blur(img_SP, (5,5))
+    cv2.imshow("img_mean_SP_cv", img_mean_SP_cv)
+    cv2.imwrite("img_mean_SP_cv.jpg", img_mean_SP_cv)
+    img_mean_SP = mean_Filter(img_SP, (5,5))
+    cv2.imshow("img_mean_SP", img_mean_SP)
+    cv2.imwrite("img_mean_SP.jpg", img_mean_SP)
 
 
-    # # 中值滤波
-    # img_mid_guass_cv=cv2.medianBlur(img_guass,5)
-    # cv2.imshow("img_mid_guass_cv", img_mid_guass_cv)
-    # cv2.imwrite("img_mid_guass_cv.jpg", img_mid_guass_cv)
-    # img_mid_guass=mid_Filter(img_guass,(5,5) )
-    # cv2.imshow("img_mid_guass", img_mid_guass)
-    # cv2.imwrite("img_mid_guass.jpg", img_mid_guass)
+    # 中值滤波
+    img_mid_guass_cv=cv2.medianBlur(img_guass,5)
+    cv2.imshow("img_mid_guass_cv", img_mid_guass_cv)
+    cv2.imwrite("img_mid_guass_cv.jpg", img_mid_guass_cv)
+    img_mid_guass=mid_Filter(img_guass,(5,5) )
+    cv2.imshow("img_mid_guass", img_mid_guass)
+    cv2.imwrite("img_mid_guass.jpg", img_mid_guass)
 
-    # img_mid_SP_cv=cv2.medianBlur(img_SP,5)
-    # cv2.imshow("img_mid_SP_cv", img_mid_SP_cv)
-    # cv2.imwrite("img_mid_SP_cv.jpg", img_mid_SP_cv)
-    # img_mid_SP=mid_Filter(img_SP,(5,5) )
-    # cv2.imshow("img_mid_SP", img_mid_SP)
-    # cv2.imwrite("img_mid_SP.jpg", img_mid_SP)
+    img_mid_SP_cv=cv2.medianBlur(img_SP,5)
+    cv2.imshow("img_mid_SP_cv", img_mid_SP_cv)
+    cv2.imwrite("img_mid_SP_cv.jpg", img_mid_SP_cv)
+    img_mid_SP=mid_Filter(img_SP,(5,5) )
+    cv2.imshow("img_mid_SP", img_mid_SP)
+    cv2.imwrite("img_mid_SP.jpg", img_mid_SP)
 
 
     # 双边滤波
