@@ -80,14 +80,58 @@ def bf_Filter(img, size=(5,5), sigma_s = 10, sigma_r = 10):
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
             window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
-            for i in range(size[0]):
-                for j in range(size[1]):
-                    dist = ((i-(size[0]-1)/2)**2+(j-(size[0]-1)/2)**2)/2/sigma_s
-                    dValue = ((float(window[i][j]) - float(window[int((size[0]-1)/2)][int((size[1]-1)/2)]))**2)/2/sigma_r
+            for i in range(window.shape[0]):
+                for j in range(window.shape[1]):
+                    dist = ((i-(window.shape[0]-1)/2)**2+(j-(window.shape[0]-1)/2)**2)/2/sigma_s
+                    dValue = ((float(window[i][j]) - float(window[int((window.shape[0]-1)/2)][int((window.shape[1]-1)/2)]))**2)/2/sigma_r
                     kernal[i][j] = math.exp(-dist)*math.exp(-dValue) # 计算模板权重
             kernal /= np.sum(kernal) # 权重归一化
             img[x][y] = np.sum(window*kernal) # 对各点进行模板操作
     return img
+
+# def gaus_kernel(winsize, gsigma):
+#     r = int(winsize/2)
+#     c = r
+#     kernel = np.zeros((winsize, winsize))
+#     sigma1 = 2*gsigma*gsigma
+#     for i in range(-r, r+1):
+#         for j in range(-c, c+1):
+#             kernel[i+r][j+c] = np.exp(-float(float((i*i+j*j))/sigma1))
+#     return kernel
+
+
+# def bf_Filter(image, gsigma, ssigma, winsize):
+#     r = int(winsize/2)
+#     c = r
+#     image1 = np.pad(image, ((r, c),(r, c)), constant_values=0)
+#     #image1 = sp_noise(image1, prob=0.01)
+#     image = image1
+#     row, col = image.shape    
+#     sigma2 = 2*ssigma*ssigma
+#     gkernel = gaus_kernel(winsize, gsigma)
+#     kernel = np.zeros((winsize, winsize))
+#     bilater_image = np.zeros((row, col))
+#     for i in range(1,row-r):
+#         for j in range(1,col-c):
+#             skernel = np.zeros((winsize, winsize))
+#             #print(i, j)
+#             for m in range(-r, r+1):
+#                 for n in range(-c, c+1):
+#                     #print(m, n)
+#                     #if (i != 0 and j !=0 and i != r and j !=c):
+#                     skernel[m+r][n+c] = np.exp(-pow((image[i][j]-image[i+m][j+n]),2)/sigma2)
+#                    # else:
+#                         #skernel[m+r][n+c] = np.exp(-pow((image[i][j]),2)/sigma2) 
+#                     #print(skernel[m+r][n+c])
+#                     kernel[m+r][n+c] = skernel[m+r][n+r] * gkernel[m+r][n+r]
+#             sum_kernel = sum(sum(kernel))
+#             kernel = kernel/sum_kernel
+#             for m in range(-r, r+1):
+#                 for n in range(-c, c+1):    
+#                     bilater_image[i][j] =  image[i+m][j+n] * kernel[m+r][n+c] + bilater_image[i][j] 
+ 
+#     return bilater_image
+
 
 
 if __name__ == '__main__':
@@ -106,50 +150,52 @@ if __name__ == '__main__':
     cv2.imshow("img_SP", img_SP)
     cv2.imwrite('img_SP.jpg', img_SP)
 
-    # 均值滤波
-    img_mean_guass_cv = cv2.blur(img_guass, (5,5))
-    cv2.imshow("img_mean_guass_cv", img_mean_guass_cv)
-    cv2.imwrite("img_mean_guass_cv.jpg", img_mean_guass_cv)
-    img_mean_guass = mean_Filter(img_guass, (5,5))
-    cv2.imshow("img_mean_guass", img_mean_guass)
-    cv2.imwrite("img_mean_guass.jpg", img_mean_guass)
+    # # 均值滤波
+    # img_mean_guass_cv = cv2.blur(img_guass, (5,5))
+    # cv2.imshow("img_mean_guass_cv", img_mean_guass_cv)
+    # cv2.imwrite("img_mean_guass_cv.jpg", img_mean_guass_cv)
+    # img_mean_guass = mean_Filter(img_guass, (5,5))
+    # cv2.imshow("img_mean_guass", img_mean_guass)
+    # cv2.imwrite("img_mean_guass.jpg", img_mean_guass)
 
-    img_mean_SP_cv = cv2.blur(img_SP, (5,5))
-    cv2.imshow("img_mean_SP_cv", img_mean_SP_cv)
-    cv2.imwrite("img_mean_SP_cv.jpg", img_mean_SP_cv)
-    img_mean_SP = mean_Filter(img_SP, (5,5))
-    cv2.imshow("img_mean_SP", img_mean_SP)
-    cv2.imwrite("img_mean_SP.jpg", img_mean_SP)
+    # img_mean_SP_cv = cv2.blur(img_SP, (5,5))
+    # cv2.imshow("img_mean_SP_cv", img_mean_SP_cv)
+    # cv2.imwrite("img_mean_SP_cv.jpg", img_mean_SP_cv)
+    # img_mean_SP = mean_Filter(img_SP, (5,5))
+    # cv2.imshow("img_mean_SP", img_mean_SP)
+    # cv2.imwrite("img_mean_SP.jpg", img_mean_SP)
 
 
-    # 中值滤波
-    img_mid_guass_cv=cv2.medianBlur(img_guass,5)
-    cv2.imshow("img_mid_guass_cv", img_mid_guass_cv)
-    cv2.imwrite("img_mid_guass_cv.jpg", img_mid_guass_cv)
-    img_mid_guass=mid_Filter(img_guass,(3,3) )
-    cv2.imshow("img_mid_guass", img_mid_guass)
-    cv2.imwrite("img_mid_guass.jpg", img_mid_guass)
+    # # 中值滤波
+    # img_mid_guass_cv=cv2.medianBlur(img_guass,5)
+    # cv2.imshow("img_mid_guass_cv", img_mid_guass_cv)
+    # cv2.imwrite("img_mid_guass_cv.jpg", img_mid_guass_cv)
+    # img_mid_guass=mid_Filter(img_guass,(5,5) )
+    # cv2.imshow("img_mid_guass", img_mid_guass)
+    # cv2.imwrite("img_mid_guass.jpg", img_mid_guass)
 
-    img_mid_SP_cv=cv2.medianBlur(img_SP,3)
-    cv2.imshow("img_mid_SP_cv", img_mid_SP_cv)
-    cv2.imwrite("img_mid_SP_cv.jpg", img_mid_SP_cv)
-    img_mid_SP=mid_Filter(img_SP,(3,3) )
-    cv2.imshow("img_mid_SP", img_mid_SP)
-    cv2.imwrite("img_mid_SP.jpg", img_mid_SP)
+    # img_mid_SP_cv=cv2.medianBlur(img_SP,5)
+    # cv2.imshow("img_mid_SP_cv", img_mid_SP_cv)
+    # cv2.imwrite("img_mid_SP_cv.jpg", img_mid_SP_cv)
+    # img_mid_SP=mid_Filter(img_SP,(5,5) )
+    # cv2.imshow("img_mid_SP", img_mid_SP)
+    # cv2.imwrite("img_mid_SP.jpg", img_mid_SP)
 
 
     # 双边滤波
-    img_bf_guass=bf_Filter(img_guass,(3,3),100,100**2)
+    img_bf_guass=bf_Filter(img_guass,(5,5),5000**2,150**2)
+    # img_bf_guass=bf_Filter(img_guass, 10, 15, 5)
     cv2.imshow("img_bf_guass", img_bf_guass)
     cv2.imwrite("img_bf_guass.jpg", img_bf_guass)
-    img_bf_guass_cv=cv2.bilateralFilter(img_guass,3,100,15)
+    img_bf_guass_cv=cv2.bilateralFilter(img_guass,5,100,15)
     cv2.imshow("img_bf_guass_cv", img_bf_guass_cv)
     cv2.imwrite("img_bf_guass_cv.jpg", img_bf_guass_cv)
 
-    img_bf_SP=bf_Filter(img_SP,(3,3),100,150**2)
+    img_bf_SP=bf_Filter(img_SP,(5,5),5000**2,150**2)
+    # img_bf_SP=bf_Filter(img_SP, 10, 15, 5)
     cv2.imshow("img_bf_SP", img_bf_SP)
     cv2.imwrite("img_bf_SP.jpg", img_bf_SP)
-    img_bf_SP_cv=cv2.bilateralFilter(img_SP,3,100,15)
+    img_bf_SP_cv=cv2.bilateralFilter(img_SP,5,100,15)
     cv2.imshow("img_bf_SP_cv", img_bf_SP_cv)
     cv2.imwrite("img_bf_SP_cv.jpg", img_bf_SP_cv)
 
