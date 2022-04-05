@@ -1,12 +1,9 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
-import sys
 
-i = 0
-j = 1
-Node_List = []
-
+Visited_List = []
+Leaf_List = [] # 叶子节点
 
 class ImgNode():
     def __init__(self, img, father_node, h0, h1, w0, w1):
@@ -16,10 +13,10 @@ class ImgNode():
         self.sub_node2 = None
         self.sub_node3 = None
         self.sub_node4 = None
-        self.left_node = None
-        self.right_node = None
-        self.up_node = None
-        self.down_node = None
+        self.left_node = []
+        self.right_node = []
+        self.up_node = []
+        self.down_node = []
         self.h0 = h0
         self.h1 = h1
         self.w0 = w0
@@ -69,40 +66,69 @@ class ImgNode():
         sub_node4 = ImgNode(self.img, self, int(
             (self.h0+self.h1)/2), self.h1, int((self.w0+self.w1)/2), self.w1)
 
-        sub_node1.left_node = self.left_node
-        sub_node1.right_node = sub_node2
-        sub_node1.up_node = self.up_node
-        sub_node1.down_node = sub_node3
+        if self.left_node is not None:
+            sub_node1.left_node.extend(self.left_node)
+        sub_node1.right_node.append(sub_node2)
+        if self.up_node is not None:
+            sub_node1.up_node.extend(self.up_node)
+        sub_node1.down_node.append(sub_node3)
 
-        sub_node2.left_node = sub_node1
-        sub_node2.right_node = self.right_node
-        sub_node2.up_node = self.up_node
-        sub_node2.down_node = sub_node4
-
-        sub_node3.left_node = self.left_node
-        sub_node3.right_node = sub_node4
-        sub_node3.up_node = sub_node1
-        sub_node3.down_node = self.down_node
-
-        sub_node4.left_node = sub_node3
-        sub_node4.right_node = self.right_node
-        sub_node4.up_node = sub_node2
-        sub_node4.down_node = self.down_node
+        sub_node2.left_node.append(sub_node1)
+        if self.right_node is not None:
+            sub_node2.right_node.extend(self.right_node)
+        if self.up_node is not None:
+            sub_node2.up_node.extend(self.up_node)
+        sub_node2.down_node.append(sub_node4)
 
         if self.left_node is not None:
-            self.left_node.right_node = sub_node1
-        if self.up_node is not None:
-            self.up_node.down_node = sub_node2
+            sub_node3.left_node.extend(self.left_node)
+        sub_node3.right_node.append(sub_node4)
+        sub_node3.up_node.append(sub_node1)
         if self.down_node is not None:
-            self.down_node.up_node = sub_node3
+            sub_node3.down_node.extend(self.down_node)
+
+        sub_node4.left_node.append(sub_node3)
         if self.right_node is not None:
-            self.right_node.left_node = sub_node4
+            sub_node4.right_node.extend(self.right_node)
+        sub_node4.up_node.append(sub_node2)
+        if self.down_node is not None:
+            sub_node4.down_node.extend(self.down_node)
+
+        # print(self.left_node)
+        for ln in self.left_node:
+            if isinstance (ln,list):
+                continue
+            if self in ln.right_node:
+                ln.right_node.remove(self)
+                ln.right_node.append(sub_node1)
+                ln.right_node.append(sub_node3)
+        for un in self.up_node:
+            if isinstance (un,list):
+                continue
+            if self in un.down_node:
+                un.down_node.remove(self)
+                un.down_node.append(sub_node1)
+                un.down_node.append(sub_node2)
+        for dn in self.down_node:
+            if isinstance (dn,list):
+                continue
+            if self in dn.up_node:
+                dn.up_node.remove(self)
+                dn.up_node.append(sub_node3)
+                dn.up_node.append(sub_node4)
+        for rn in self.right_node:
+            if isinstance (rn,list):
+                continue
+            if self in rn.left_node:
+                rn.left_node.remove(self)
+                rn.left_node.append(sub_node2)
+                rn.left_node.append(sub_node4)
 
         self.sub_node1 = sub_node1
         self.sub_node2 = sub_node2
         self.sub_node3 = sub_node3
         self.sub_node4 = sub_node4
-        return sub_node1, sub_node2, sub_node3, sub_node4
+        # return sub_node1, sub_node2, sub_node3, sub_node4
 
     def draw_node(self, img):
         point_color = (255, 255, 255)
@@ -114,14 +140,20 @@ class ImgNode():
 
 
 def split(node, draw_img):
-    if node.h1-node.h0 >= 1 and node.w1-node.w0 >= 1:
-        draw_img = node.draw_node(draw_img)
+    if node not in Leaf_List:
+        Leaf_List.append(node)
+    
     if node.split_judge() and node.h1-node.h0 >= 2 and node.w1-node.w0 >= 2:
+        Leaf_List.remove(node)
         node.split_node()
         draw_img = split(node.sub_node1, draw_img)
         draw_img = split(node.sub_node2, draw_img)
         draw_img = split(node.sub_node3, draw_img)
         draw_img = split(node.sub_node4, draw_img)
+
+    if node.h1-node.h0 >= 1 and node.w1-node.w0 >= 1:
+        draw_img = node.draw_node(draw_img)
+
     return draw_img
 
 
@@ -131,13 +163,11 @@ def is_leaf(node):
     else:
         return False
 
-
 def is_leaf_father(node):
     if is_leaf(node) is False and is_leaf(node.sub_node1) and is_leaf(node.sub_node2) and is_leaf(node.sub_node3) and is_leaf(node.sub_node4):
         return True
     else:
         return False
-
 
 def find_leaf_father(node):
     if is_leaf_father(node):
@@ -160,56 +190,48 @@ def find_leaf_father(node):
 
 
 def merge(node, contour_img):
-    global i
-    print('i=', i)
-    i += 1
-
-    global Node_List
-    # print(Node_List)
-    if node in Node_List:
-        print('return')
+    global Visited_List
+    if node in Visited_List:
         return contour_img
-
     else:
-        Node_List.append(node)
+        Visited_List.append(node)
 
-    cv2.imshow('test', contour_img)
-    cv2.imwrite('test.png', contour_img)
+    # cv2.imshow('test', contour_img)
+    # cv2.imwrite('test.png', contour_img)
 
-    threshold = 0.0
+    threshold = 5
     contour_img = node.draw_contour_img(contour_img)
     self_mean = node.cal_mean()
-    if node.right_node is not None:
-        if abs(self_mean - node.right_node.cal_mean()) <= threshold:
-            print('right', self_mean - node.right_node.cal_mean())
-            # if self.right_node.left_node is self:
-            #     self.right_node.left_node = None
-            contour_img = merge(node.right_node,contour_img)
-    if node.down_node is not None:
-        if abs(self_mean - node.down_node.cal_mean()) <= threshold:
-            print('down', self_mean - node.down_node.cal_mean())
-            # if self.down_node.up_node is self:
-            #     self.down_node.up_node = None
-            contour_img = merge(node.down_node,contour_img)
-    if node.up_node is not None:
-        if abs(self_mean - node.up_node.cal_mean()) <= threshold:
-            print('up', self_mean - node.up_node.cal_mean())
-            # if self.up_node.down_node is self:
-            #     self.up_node.down_node = None
-            contour_img = merge(node.up_node,contour_img)
-    if node.left_node is not None:
-        if abs(self_mean - node.left_node.cal_mean()) <= threshold:
-            print('left', self_mean - node.left_node.cal_mean())
-
-            # if self.left_node.right_node is self:
-            #     self.left_node.right_node = None
-            contour_img = merge(node.left_node,contour_img)
+    for rn in node.right_node:
+        if isinstance (rn,list):
+            continue
+        if abs(self_mean - rn.cal_mean()) <= threshold:
+            # print('right', self_mean - rn.cal_mean())
+            contour_img = merge(rn,contour_img)
+    for dn in node.down_node:
+        if isinstance (dn,list):
+            continue
+        if abs(self_mean - dn.cal_mean()) <= threshold:
+            # print('down', self_mean - dn.cal_mean())
+            contour_img = merge(dn,contour_img)
+    for un in node.up_node:
+        if isinstance (un,list):
+            continue
+        if abs(self_mean - un.cal_mean()) <= threshold:
+            # print('up', self_mean - un.cal_mean())
+            contour_img = merge(un,contour_img)
+    for ln in node.left_node:
+        if isinstance (ln,list):
+            continue
+        if abs(self_mean - ln.cal_mean()) <= threshold:
+            # print('left', self_mean - ln.cal_mean())
+            contour_img = merge(ln,contour_img)
 
     return contour_img
 
 
 if __name__ == '__main__':
-    sys.setrecursionlimit(10000)  # 设置递归层数
+    # sys.setrecursionlimit(10000)  # 设置递归层数
 
     img = cv2.imread('zju_logo.png', 0)
     origin_img = img.copy()
@@ -224,11 +246,10 @@ if __name__ == '__main__':
     cv2.imshow('draw_img', draw_img)
     cv2.imwrite('draw_img.png', draw_img)
 
+
     leaf_father = find_leaf_father(start_node)
     contour_img = np.zeros((int(img.shape[0]), int(img.shape[1])))
-    contour_img = merge(leaf_father.sub_node4, contour_img)
-
-    # contour_img = leaf_father.sub_node1.draw_contour_img(contour_img)
+    contour_img = merge(leaf_father,contour_img)
 
     cv2.imshow('contour_img', contour_img)
     cv2.imwrite('contour_img.png', contour_img)
