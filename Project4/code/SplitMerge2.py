@@ -21,7 +21,6 @@ class ImgNode():
         self.h1 = h1
         self.w0 = w0
         self.w1 = w1
-        self.isleaf = True
 
     def split_judge(self):
         img = self.img
@@ -57,8 +56,7 @@ class ImgNode():
                 contour_img[h][w] = 255  # 填充为白色
         return contour_img
 
-    def node_split(self):
-        self.isleaf = False
+    def split_node(self):
         sub_node1 = ImgNode(self.img, self, self.h0, int(
             (self.h0+self.h1)/2), self.w0, int((self.w0+self.w1)/2))
         sub_node2 = ImgNode(self.img, self, self.h0, int(
@@ -130,31 +128,7 @@ class ImgNode():
         self.sub_node2 = sub_node2
         self.sub_node3 = sub_node3
         self.sub_node4 = sub_node4
-    
-    def is_leaf_father(self):
-        if self.isleaf is False and self.sub_node1.isleaf and self.sub_node2.isleaf and self.sub_node3.isleaf and self.sub_node4.isleaf:
-            return True
-        else:
-            return False
-
-    def find_leaf_father(self):
-      if self.is_leaf_father():
-          return self
-      elif self.isleaf:
-          return None
-      else:
-        res1 = self.sub_node1.find_leaf_father()
-        if res1 is not None:
-            return res1
-        res2 = self.sub_node2.find_leaf_father()
-        if res2 is not None:
-            return res2
-        res3 = self.sub_node3.find_leaf_father()
-        if res3 is not None:
-            return res3
-        res4 = self.sub_node4.find_leaf_father()
-        if res4 is not None:
-            return res4
+        # return sub_node1, sub_node2, sub_node3, sub_node4
 
     def draw_node(self, img):
         point_color = (255, 255, 255)
@@ -165,25 +139,57 @@ class ImgNode():
         return img
 
 
-def split(node, draw_img, min_area = 1):
+def split(node, draw_img):
     if node not in Leaf_List:
         Leaf_List.append(node)
     
-    if node.split_judge() and node.h1-node.h0 >= 2*min_area and node.w1-node.w0 >= 2*min_area:
+    if node.split_judge() and node.h1-node.h0 >= 2 and node.w1-node.w0 >= 2:
         Leaf_List.remove(node)
-        node.node_split()
+        node.split_node()
         draw_img = split(node.sub_node1, draw_img)
         draw_img = split(node.sub_node2, draw_img)
         draw_img = split(node.sub_node3, draw_img)
         draw_img = split(node.sub_node4, draw_img)
 
-    if node.h1-node.h0 >= min_area and node.w1-node.w0 >= min_area:
+    if node.h1-node.h0 >= 1 and node.w1-node.w0 >= 1:
         draw_img = node.draw_node(draw_img)
 
     return draw_img
 
 
-def merge(node, contour_img, threshold = 5):
+def is_leaf(node):
+    if node.sub_node1 is None and node.sub_node2 is None and node.sub_node3 is None and node.sub_node4 is None:
+        return True
+    else:
+        return False
+
+def is_leaf_father(node):
+    if is_leaf(node) is False and is_leaf(node.sub_node1) and is_leaf(node.sub_node2) and is_leaf(node.sub_node3) and is_leaf(node.sub_node4):
+        return True
+    else:
+        return False
+
+def find_leaf_father(node):
+    if is_leaf_father(node):
+        return node
+    elif is_leaf(node):
+        return None
+    else:
+        res1 = find_leaf_father(node.sub_node1)
+        if res1 is not None:
+            return res1
+        res2 = find_leaf_father(node.sub_node2)
+        if res2 is not None:
+            return res2
+        res3 = find_leaf_father(node.sub_node3)
+        if res3 is not None:
+            return res3
+        res4 = find_leaf_father(node.sub_node4)
+        if res4 is not None:
+            return res4
+
+
+def merge(node, contour_img):
     global Visited_List
     if node in Visited_List:
         return contour_img
@@ -193,7 +199,7 @@ def merge(node, contour_img, threshold = 5):
     # cv2.imshow('test', contour_img)
     # cv2.imwrite('test.png', contour_img)
 
-    
+    threshold = 5
     contour_img = node.draw_contour_img(contour_img)
     self_mean = node.cal_mean()
     for rn in node.right_node:
@@ -236,14 +242,14 @@ if __name__ == '__main__':
     start_node = ImgNode(img, None, 0, img.shape[0], 0, img.shape[1])
     draw_img = start_node.draw_node(origin_img)
 
-    draw_img = split(start_node, draw_img,1)
+    draw_img = split(start_node, draw_img)
     cv2.imshow('draw_img', draw_img)
     cv2.imwrite('draw_img.png', draw_img)
 
 
-    leaf_father = start_node.find_leaf_father()
+    leaf_father = find_leaf_father(start_node)
     contour_img = np.zeros((int(img.shape[0]), int(img.shape[1])))
-    contour_img = merge(leaf_father,contour_img,5)
+    contour_img = merge(leaf_father,contour_img)
 
     cv2.imshow('contour_img', contour_img)
     cv2.imwrite('contour_img.png', contour_img)
