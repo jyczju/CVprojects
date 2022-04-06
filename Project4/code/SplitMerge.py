@@ -1,251 +1,236 @@
+'''
+图像切割+边缘识别
+浙江大学控制学院《数字图像处理与机器视觉》第三次作业
+jyczju
+2022/4/6 v1.0
+'''
 import cv2
 import numpy as np
+import sys
+from imgnode import ImgNode
 import matplotlib.pyplot as plt
 
-Visited_List = []
-Leaf_List = [] # 叶子节点
+def region_split_merge(img, min_area=(1,1), threshold=5.0):
+    '''
+    区域分裂合并算法，主要依靠ImgNode类实现
+    输入：待处理图像，分裂的最小区域，合并的相似性判断阈值
+    输出：前后景分割后的二值化图像
+    '''
+    draw_img = img.copy() # 用于绘制分裂结果的图像
 
-class ImgNode():
-    def __init__(self, img, father_node, h0, h1, w0, w1):
-        self.img = img
-        self.father_node = father_node
-        self.sub_node1 = None
-        self.sub_node2 = None
-        self.sub_node3 = None
-        self.sub_node4 = None
-        self.left_node = []
-        self.right_node = []
-        self.up_node = []
-        self.down_node = []
-        self.h0 = h0
-        self.h1 = h1
-        self.w0 = w0
-        self.w1 = w1
-        self.isleaf = True
+    start_node = ImgNode(img, None, 0, img.shape[0], 0, img.shape[1]) # 创建起始节点，即整幅图像
 
-    def split_judge(self):
-        img = self.img
-        h0 = self.h0
-        h1 = self.h1
-        w0 = self.w0
-        w1 = self.w1
-        area = img[h0: h1, w0: w1]
-        var_value = np.var(area)  # 计算方差
-        if var_value > 1.5:
-            return True  # 需要分裂
-        else:
-            return False  # 不需要分裂
+    draw_img = start_node.split(draw_img, min_area) # 区域分裂
 
-    def cal_mean(self):
-        img = self.img
-        h0 = self.h0
-        h1 = self.h1
-        w0 = self.w0
-        w1 = self.w1
-        area = img[h0: h1, w0: w1]
-        mean_value = np.mean(area)  # 计算均值
-        # print('mean_value',mean_value)
-        return mean_value
+    leaf_father = start_node.find_leaf_father() # 寻找开始合并的节点
+    region_img = np.zeros((int(img.shape[0]), int(img.shape[1]))) # 二值化图像初始化
+    region_img = leaf_father.sub_node3.merge(region_img, threshold) # 区域合并
 
-    def draw_contour_img(self, contour_img):
-        h0 = self.h0
-        h1 = self.h1
-        w0 = self.w0
-        w1 = self.w1
-        for h in range(h0-1, h1):
-            for w in range(w0-1, w1):
-                contour_img[h][w] = 255  # 填充为白色
-        return contour_img
+    return region_img,draw_img
 
-    def node_split(self):
-        self.isleaf = False
-        sub_node1 = ImgNode(self.img, self, self.h0, int(
-            (self.h0+self.h1)/2), self.w0, int((self.w0+self.w1)/2))
-        sub_node2 = ImgNode(self.img, self, self.h0, int(
-            (self.h0+self.h1)/2), int((self.w0+self.w1)/2), self.w1)
-        sub_node3 = ImgNode(self.img, self, int(
-            (self.h0+self.h1)/2), self.h1, self.w0, int((self.w0+self.w1)/2))
-        sub_node4 = ImgNode(self.img, self, int(
-            (self.h0+self.h1)/2), self.h1, int((self.w0+self.w1)/2), self.w1)
+def extract_contour(region_img):
+    '''
+    轮廓提取，某一像素周边若有背景像素，则认为其为轮廓
+    输入：二值化图像，目标像素为黑色，背景像素为白色
+    输出：轮廓图像，轮廓为黑色，背景为白色
+    '''
+    contour_img = region_img.copy() # 初始化轮廓图像
 
-        if self.left_node is not None:
-            sub_node1.left_node.extend(self.left_node)
-        sub_node1.right_node.append(sub_node2)
-        if self.up_node is not None:
-            sub_node1.up_node.extend(self.up_node)
-        sub_node1.down_node.append(sub_node3)
-
-        sub_node2.left_node.append(sub_node1)
-        if self.right_node is not None:
-            sub_node2.right_node.extend(self.right_node)
-        if self.up_node is not None:
-            sub_node2.up_node.extend(self.up_node)
-        sub_node2.down_node.append(sub_node4)
-
-        if self.left_node is not None:
-            sub_node3.left_node.extend(self.left_node)
-        sub_node3.right_node.append(sub_node4)
-        sub_node3.up_node.append(sub_node1)
-        if self.down_node is not None:
-            sub_node3.down_node.extend(self.down_node)
-
-        sub_node4.left_node.append(sub_node3)
-        if self.right_node is not None:
-            sub_node4.right_node.extend(self.right_node)
-        sub_node4.up_node.append(sub_node2)
-        if self.down_node is not None:
-            sub_node4.down_node.extend(self.down_node)
-
-        # print(self.left_node)
-        for ln in self.left_node:
-            if isinstance (ln,list):
-                continue
-            if self in ln.right_node:
-                ln.right_node.remove(self)
-                ln.right_node.append(sub_node1)
-                ln.right_node.append(sub_node3)
-        for un in self.up_node:
-            if isinstance (un,list):
-                continue
-            if self in un.down_node:
-                un.down_node.remove(self)
-                un.down_node.append(sub_node1)
-                un.down_node.append(sub_node2)
-        for dn in self.down_node:
-            if isinstance (dn,list):
-                continue
-            if self in dn.up_node:
-                dn.up_node.remove(self)
-                dn.up_node.append(sub_node3)
-                dn.up_node.append(sub_node4)
-        for rn in self.right_node:
-            if isinstance (rn,list):
-                continue
-            if self in rn.left_node:
-                rn.left_node.remove(self)
-                rn.left_node.append(sub_node2)
-                rn.left_node.append(sub_node4)
-
-        self.sub_node1 = sub_node1
-        self.sub_node2 = sub_node2
-        self.sub_node3 = sub_node3
-        self.sub_node4 = sub_node4
-    
-    def is_leaf_father(self):
-        if self.isleaf is False and self.sub_node1.isleaf and self.sub_node2.isleaf and self.sub_node3.isleaf and self.sub_node4.isleaf:
-            return True
-        else:
-            return False
-
-    def find_leaf_father(self):
-      if self.is_leaf_father():
-          return self
-      elif self.isleaf:
-          return None
-      else:
-        res1 = self.sub_node1.find_leaf_father()
-        if res1 is not None:
-            return res1
-        res2 = self.sub_node2.find_leaf_father()
-        if res2 is not None:
-            return res2
-        res3 = self.sub_node3.find_leaf_father()
-        if res3 is not None:
-            return res3
-        res4 = self.sub_node4.find_leaf_father()
-        if res4 is not None:
-            return res4
-
-    def draw_node(self, img):
-        point_color = (255, 255, 255)
-        thickness = 1
-        lineType = 4
-        cv2.rectangle(img, (self.w0, self.h0), (self.w1, self.h1),
-                      point_color, thickness, lineType)
-        return img
-
-
-def split(node, draw_img, min_area = 1):
-    if node not in Leaf_List:
-        Leaf_List.append(node)
-    
-    if node.split_judge() and node.h1-node.h0 >= 2*min_area and node.w1-node.w0 >= 2*min_area:
-        Leaf_List.remove(node)
-        node.node_split()
-        draw_img = split(node.sub_node1, draw_img)
-        draw_img = split(node.sub_node2, draw_img)
-        draw_img = split(node.sub_node3, draw_img)
-        draw_img = split(node.sub_node4, draw_img)
-
-    if node.h1-node.h0 >= min_area and node.w1-node.w0 >= min_area:
-        draw_img = node.draw_node(draw_img)
-
-    return draw_img
-
-
-def merge(node, contour_img, threshold = 5):
-    global Visited_List
-    if node in Visited_List:
-        return contour_img
-    else:
-        Visited_List.append(node)
-
-    # cv2.imshow('test', contour_img)
-    # cv2.imwrite('test.png', contour_img)
-
-    
-    contour_img = node.draw_contour_img(contour_img)
-    self_mean = node.cal_mean()
-    for rn in node.right_node:
-        if isinstance (rn,list):
-            continue
-        if abs(self_mean - rn.cal_mean()) <= threshold:
-            # print('right', self_mean - rn.cal_mean())
-            contour_img = merge(rn,contour_img)
-    for dn in node.down_node:
-        if isinstance (dn,list):
-            continue
-        if abs(self_mean - dn.cal_mean()) <= threshold:
-            # print('down', self_mean - dn.cal_mean())
-            contour_img = merge(dn,contour_img)
-    for un in node.up_node:
-        if isinstance (un,list):
-            continue
-        if abs(self_mean - un.cal_mean()) <= threshold:
-            # print('up', self_mean - un.cal_mean())
-            contour_img = merge(un,contour_img)
-    for ln in node.left_node:
-        if isinstance (ln,list):
-            continue
-        if abs(self_mean - ln.cal_mean()) <= threshold:
-            # print('left', self_mean - ln.cal_mean())
-            contour_img = merge(ln,contour_img)
+    for h in range(1,region_img.shape[0]-1):
+        for w in range(1,region_img.shape[1]-1): # 遍历图像中的每一点
+            if region_img[h][w] == 0 and region_img[h-1][w] == 0 and region_img[h+1][w] == 0 and region_img[h][w-1] == 0 and region_img[h][w+1] == 0:
+                contour_img[h][w] = 255 # 若像素本身及其周围像素均为黑色，则其为内部点，将其置为白色
 
     return contour_img
 
+def track_contour(img, start_point):
+    '''
+    轮廓跟踪
+    输入：边界图像，当前轮廓起始点
+    输出：当前轮廓轮廓链码
+    '''
+    neibor = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]  # 8连通方向码
+    dir = 5  # 起始搜索方向
+    contours = [start_point]  # 用于存储轮廓点
+
+    current_point = start_point # 将轮廓的开始点设为当前点
+    
+    neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 通过当前点和邻域点集以及链码值确定邻点
+
+    while True:  # 轮廓扫描循环
+        # print('current_point',current_point)
+        while img[neibor_point[0], neibor_point[1]] != 0:  # 邻点不是边界点
+            dir += 1  # 逆时针旋转45度进行搜索
+            if dir >= 8:
+                dir -= 8
+            neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 更新邻点
+        else:  
+            current_point = neibor_point # 将符合条件的邻域点设为当前点进行下一次的边界点搜索
+            contours.append(current_point) # 将当前点加入轮廓list
+            if (dir % 2) == 0:
+                dir += 7
+            else:
+                dir += 6
+            if dir >= 8:
+                dir -= 8 # 更新方向
+            neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 更新邻点
+
+        if current_point == start_point:
+            break # 当搜索点回到起始点，搜索结束，退出循环
+
+    return contours
+
+def draw_contour(img, contours, color=(0, 0, 255)):
+    '''
+    在img上绘制轮廓
+    输入：欲绘制的图像，轮廓链码，颜色
+    输出：绘制好的图像
+    '''
+    for (x, y) in (contours): # 绘制轮廓
+        img[x-1:x+1, y-1:y+1] = color  # 粗
+        # img_cnt[x,y] = (0, 0, 255) # 细
+    return img
+
+def find_start_point(img, all_cnts):
+    '''
+    寻找起始点
+    输入：边界图像，已被识别到的轮廓list
+    输出：起始点
+    '''
+    start_point = (-1, -1) # 初始化起始点
+
+    # 寻找起始点
+    for i in range(img.shape[0]):
+        for j in range(img.shape[1]):
+            if img[i, j] == 0 and (i, j) not in all_cnts: # 点为黑色且不在已识别到的轮廓list中
+                start_point = (i, j) # 找到新的起始点
+                break
+        if start_point != (-1, -1):
+            break
+    return start_point
+
+def find_cnts(img):
+    '''
+    寻找轮廓集合
+    输入：边界图像
+    输出：轮廓集合（list,每一项都是一个轮廓链码）
+    '''
+    contours = [] # 当前边界轮廓初始化
+    cnts = [] # 轮廓集合初始化
+    all_cnts = [] # 所有已找到的轮廓点
+
+    while True:
+        start_point = find_start_point(img, all_cnts) # 寻找当前边界的轮廓起始点
+        # print('start point:', start_point)
+
+        if start_point == (-1, -1): # 若找不到新的起始点，则说明所有的轮廓点都已被找到，退出循环
+            break
+
+        contours = track_contour(img, start_point) # 寻找当前边界的轮廓
+        cnts.append(contours) # 将找到的轮廓加入轮廓集合中
+        all_cnts = all_cnts + contours # 将找到的轮廓点加入轮廓点集合中
+
+    return cnts
+
+def draw_cnts(cnts, img, color=(0, 0, 255)):
+    '''
+    绘制所有轮廓
+    输入：轮廓集合，欲绘制的图像，颜色
+    输出：绘制好的图像
+    '''
+    for cnt in cnts:
+        img = draw_contour(img, cnt, color) # 逐一绘制每个轮廓
+    return img
+
+def contours_filter(cnts, windows_size = 13):
+    '''
+    对轮廓进行滤波（均值滤波）
+    输入：轮廓集合，滤波窗口大小
+    输出：滤波后的轮廓集合
+    '''
+    if (windows_size % 2) == 0:
+        windows_size += 1 # 保证windows_size为奇数
+    cnts_filter = [] # 初始化滤波后的轮廓集合
+    for cnt in cnts:
+        for i in range(int((windows_size-1)/2), len(cnt)-int((windows_size-1)/2)):
+            ix = np.mean([cnt[j][0] for j in range(i-int((windows_size-1)/2), i+int((windows_size-1)/2)+1)])
+            iy = np.mean([cnt[j][1] for j in range(i-int((windows_size-1)/2), i+int((windows_size-1)/2)+1)])
+            cnt[i] = (int(ix), int(iy)) # 均值滤波
+        cnts_filter.append(cnt) # 将滤波后的轮廓添加到集合中
+    return cnts_filter
+
 
 if __name__ == '__main__':
-    # sys.setrecursionlimit(10000)  # 设置递归层数
+    sys.setrecursionlimit(100000) # 设置最大允许递归深度
 
-    img = cv2.imread('zju_logo.png', 0)
-    origin_img = img.copy()
+    img = cv2.imread('zjui_logo.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo.png', 0) # 读入图像
+    origin_img = img.copy() # 备份原始图像
     cv2.imshow('origin_img', origin_img)
-    draw_img = img.copy()
-    # print(img.shape[0],img.shape[1])
 
-    start_node = ImgNode(img, None, 0, img.shape[0], 0, img.shape[1])
-    draw_img = start_node.draw_node(origin_img)
-
-    draw_img = split(start_node, draw_img,1)
-    cv2.imshow('draw_img', draw_img)
+    region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 区域分裂合并
+    cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
     cv2.imwrite('draw_img.png', draw_img)
 
+    cv2.imshow('region_img', region_img) # 显示区域合并结果
+    cv2.imwrite('region_img.png', region_img)
 
-    leaf_father = start_node.find_leaf_father()
-    contour_img = np.zeros((int(img.shape[0]), int(img.shape[1])))
-    contour_img = merge(leaf_father,contour_img,5)
+    contour_img = extract_contour(region_img) # 轮廓提取
+    cv2.imshow('contour_img', contour_img) # 显示轮廓图像
+    cv2.imwrite('contour_img.png', contour_img) 
 
-    cv2.imshow('contour_img', contour_img)
-    cv2.imwrite('contour_img.png', contour_img)
+    cnts = find_cnts(contour_img) # 轮廓跟踪
+    print('cnts:')
+    print(cnts)
+
+    # img_cnt = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
+    img_cnt = 255*np.ones([img.shape[0], img.shape[1], 3])
+    img_cnt = draw_cnts(cnts, img_cnt, color = (0, 0, 255)) # 绘制轮廓跟踪结果
+    cv2.imshow('img_cnt', img_cnt)
+    cv2.imwrite('img_cnt.png', img_cnt)
+
+    cnts_filter = contours_filter(cnts, windows_size = 11) # 轮廓链码滤波
+    print('cnts_filter')
+    print(cnts_filter)
+
+    # img_cnt_filter = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
+    img_cnt_filter = 255*np.ones([img.shape[0], img.shape[1], 3])
+    img_cnt_filter = draw_cnts(cnts_filter, img_cnt_filter, color=(255, 0, 0)) # 绘制轮廓链码滤波结果
+    cv2.imshow('img_cnt_filter', img_cnt_filter)
+    cv2.imwrite('img_cnt_filter.png', img_cnt_filter)    
+
+
+    plt.figure(1)
+    plt.subplot(321)
+    plt.axis('off')
+    plt.imshow(origin_img,cmap='gray')
+    plt.title("origin_img",fontdict={'weight':'normal','size': 15})
+
+    plt.subplot(322)
+    plt.axis('off')
+    plt.imshow(draw_img,cmap='gray')
+    plt.title("split_img",fontdict={'weight':'normal','size': 15})
+
+    plt.subplot(323)
+    plt.axis('off')
+    plt.imshow(region_img,cmap='gray')
+    plt.title("region_img",fontdict={'weight':'normal','size': 15})
+
+    plt.subplot(324)
+    plt.axis('off')
+    plt.imshow(contour_img,cmap='gray')
+    plt.title("contours",fontdict={'weight':'normal','size': 15})
+
+    plt.subplot(325)
+    plt.axis('off')
+    plt.imshow(cv2.cvtColor(img_cnt.astype(np.float32),cv2.COLOR_BGR2RGB))
+    plt.title("contours_by_ChainCode",fontdict={'weight':'normal','size': 15})
+
+    plt.subplot(326)
+    plt.axis('off')
+    plt.imshow(cv2.cvtColor(img_cnt_filter.astype(np.float32),cv2.COLOR_BGR2RGB))
+    plt.title("contours_filter_by_ChainCode",fontdict={'weight':'normal','size': 15})
+
+    plt.show()
 
     cv2.waitKey(0)
