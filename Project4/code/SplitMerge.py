@@ -57,6 +57,9 @@ def track_contour(img, start_point):
     
     neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 通过当前点和邻域点集以及链码值确定邻点
 
+    if neibor_point[0] >= img.shape[0] or neibor_point[1] >= img.shape[1] or neibor_point[0] < 0 or neibor_point[1] < 0: # 若邻点超出边界，则轮廓结束
+        return contours
+
     while True:  # 轮廓扫描循环
         # print('current_point',current_point)
         while img[neibor_point[0], neibor_point[1]] != 0:  # 邻点不是边界点
@@ -64,6 +67,10 @@ def track_contour(img, start_point):
             if dir >= 8:
                 dir -= 8
             neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 更新邻点
+
+            if neibor_point[0] >= img.shape[0] or neibor_point[1] >= img.shape[1] or neibor_point[0] < 0 or neibor_point[1] < 0: # 若邻点超出边界，则轮廓结束
+                return contours
+
         else:  
             current_point = neibor_point # 将符合条件的邻域点设为当前点进行下一次的边界点搜索
             contours.append(current_point) # 将当前点加入轮廓list
@@ -74,6 +81,9 @@ def track_contour(img, start_point):
             if dir >= 8:
                 dir -= 8 # 更新方向
             neibor_point = tuple(np.array(current_point) + np.array(neibor[dir])) # 更新邻点
+
+            if neibor_point[0] >= img.shape[0] or neibor_point[1] >= img.shape[1] or neibor_point[0] < 0 or neibor_point[1] < 0: # 若邻点超出边界，则轮廓结束
+                return contours
 
         if current_point == start_point:
             break # 当搜索点回到起始点，搜索结束，退出循环
@@ -163,20 +173,21 @@ def contours_filter(cnts, windows_size = 13):
 if __name__ == '__main__':
     sys.setrecursionlimit(100000) # 设置最大允许递归深度
 
-    img = cv2.imread('zjui_logo.png', 0) # 读入图像
-    # img = cv2.imread('zju_logo.png', 0) # 读入图像
+    # img = cv2.imread('zjui_logo.png', 0) # 读入图像
+    img = cv2.imread('zju_logo.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo_uneven.png', 0) # 读入图像
     origin_img = img.copy() # 备份原始图像
-    cv2.imshow('origin_img', origin_img)
+    # cv2.imshow('origin_img', origin_img)
 
     region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 区域分裂合并
-    cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
+    # cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
     cv2.imwrite('draw_img.png', draw_img)
 
-    cv2.imshow('region_img', region_img) # 显示区域合并结果
+    # cv2.imshow('region_img', region_img) # 显示区域合并结果
     cv2.imwrite('region_img.png', region_img)
 
     contour_img = extract_contour(region_img) # 轮廓提取
-    cv2.imshow('contour_img', contour_img) # 显示轮廓图像
+    # cv2.imshow('contour_img', contour_img) # 显示轮廓图像
     cv2.imwrite('contour_img.png', contour_img) 
 
     cnts = find_cnts(contour_img) # 轮廓跟踪
@@ -186,7 +197,7 @@ if __name__ == '__main__':
     # img_cnt = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
     img_cnt = 255*np.ones([img.shape[0], img.shape[1], 3])
     img_cnt = draw_cnts(cnts, img_cnt, color = (0, 0, 255)) # 绘制轮廓跟踪结果
-    cv2.imshow('img_cnt', img_cnt)
+    # cv2.imshow('img_cnt', img_cnt)
     cv2.imwrite('img_cnt.png', img_cnt)
 
     cnts_filter = contours_filter(cnts, windows_size = 11) # 轮廓链码滤波
@@ -196,40 +207,40 @@ if __name__ == '__main__':
     # img_cnt_filter = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
     img_cnt_filter = 255*np.ones([img.shape[0], img.shape[1], 3])
     img_cnt_filter = draw_cnts(cnts_filter, img_cnt_filter, color=(255, 0, 0)) # 绘制轮廓链码滤波结果
-    cv2.imshow('img_cnt_filter', img_cnt_filter)
+    # cv2.imshow('img_cnt_filter', img_cnt_filter)
     cv2.imwrite('img_cnt_filter.png', img_cnt_filter)    
 
-
     plt.figure(1)
+    title_size = 12
     plt.subplot(321)
     plt.axis('off')
     plt.imshow(origin_img,cmap='gray')
-    plt.title("origin_img",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 1: Original image",fontdict={'weight':'normal','size': title_size})
 
     plt.subplot(322)
     plt.axis('off')
     plt.imshow(draw_img,cmap='gray')
-    plt.title("split_img",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 2: Splited image",fontdict={'weight':'normal','size': title_size})
 
     plt.subplot(323)
     plt.axis('off')
     plt.imshow(region_img,cmap='gray')
-    plt.title("region_img",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 3: Merged image",fontdict={'weight':'normal','size': title_size})
 
     plt.subplot(324)
     plt.axis('off')
     plt.imshow(contour_img,cmap='gray')
-    plt.title("contours",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 4: Contours",fontdict={'weight':'normal','size': title_size})
 
     plt.subplot(325)
     plt.axis('off')
     plt.imshow(cv2.cvtColor(img_cnt.astype(np.float32),cv2.COLOR_BGR2RGB))
-    plt.title("contours_by_ChainCode",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 5: Contours tracked by ChainCode",fontdict={'weight':'normal','size': title_size})
 
     plt.subplot(326)
     plt.axis('off')
     plt.imshow(cv2.cvtColor(img_cnt_filter.astype(np.float32),cv2.COLOR_BGR2RGB))
-    plt.title("contours_filter_by_ChainCode",fontdict={'weight':'normal','size': 15})
+    plt.title("Figure 6: Filtered Contours",fontdict={'weight':'normal','size': title_size})
 
     plt.show()
 

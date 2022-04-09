@@ -6,6 +6,8 @@ img = cv2.imread('ex_red_3.jpg',0)
 
 # 2.固定阈值
 ret, th1 = cv2.threshold(img, 40, 255, cv2.THRESH_BINARY)
+
+
 # 3.自适应阈值
 # 3.1 邻域内求均值
 th2 = cv2.adaptiveThreshold(img, 255, cv2.ADAPTIVE_THRESH_MEAN_C, cv2.THRESH_BINARY, 27, 4) # 11 4
