@@ -174,16 +174,23 @@ if __name__ == '__main__':
     sys.setrecursionlimit(100000) # 设置最大允许递归深度
 
     # img = cv2.imread('zjui_logo.png', 0) # 读入图像
-    img = cv2.imread('zju_logo.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo_gauss.png', 0) # 读入图像
+    img = cv2.imread('zjui_logo_gauss.png', 0) # 读入图像
     # img = cv2.imread('zju_logo_uneven.png', 0) # 读入图像
+    # img = cv2.imread('zjui_logo_uneven.png', 0) # 读入图像
     origin_img = img.copy() # 备份原始图像
     # cv2.imshow('origin_img', origin_img)
 
-    region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 区域分裂合并
-    # cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
+    region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 5.0 # 区域分裂合并
+    cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
     cv2.imwrite('draw_img.png', draw_img)
 
     # cv2.imshow('region_img', region_img) # 显示区域合并结果
+    region_img[275:300, 0:450] = 255 # 将区域图像中的一部分置为白色
+    region_img[0:300, 445:450] = 255 # 将区域图像中的一部分置为白色
+
+
     cv2.imwrite('region_img.png', region_img)
 
     contour_img = extract_contour(region_img) # 轮廓提取
@@ -210,7 +217,7 @@ if __name__ == '__main__':
     # cv2.imshow('img_cnt_filter', img_cnt_filter)
     cv2.imwrite('img_cnt_filter.png', img_cnt_filter)    
 
-    plt.figure(1)
+    plt.figure(figsize=(9, 9.5))
     title_size = 12
     plt.subplot(321)
     plt.axis('off')

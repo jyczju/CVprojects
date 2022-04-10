@@ -38,7 +38,7 @@ class ImgNode():
         输出：是否需要分裂
         '''
         var_value = self.cal_var()  # 计算当前节点的灰度方差
-        if var_value > 3.6:  # 判断标准
+        if var_value > 150: # 3.6:  # 判断标准
             return True  # 需要分裂
         else:
             return False  # 不需要分裂
