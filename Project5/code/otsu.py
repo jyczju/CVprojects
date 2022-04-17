@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 
 def otsu(img_gray, GrayScale):
     u1=0.0 # 背景像素的平均灰度值
@@ -52,24 +51,7 @@ def otsu(img_gray, GrayScale):
 
 def threshold(img, th):
     th_img = np.zeros(img.shape, dtype=np.uint8)
-    for i in range(th_img.shape[0]):
-        for j in range(th_img.shape[1]):
-            if img[i,j]>=th:
-                th_img[i,j]=255
-            else:
-                th_img[i,j]=0
+    th_img[img>=th] = 255
+    th_img[img<th] = 0
     return th_img
-
-
-if "__main__" == __name__:
-    img = cv2.imread('siling.png', 0) # 读入图片
-    origin_img = img.copy()
-    cv2.imshow("origin_img", origin_img)
-
-    th = otsu(img, 256) # 使用otsu法确定阈值
-    print("otsu法确定的阈值为" + str(th))
-    th_img = threshold(img, th)
-
-    cv2.imshow("th_img", th_img)
-    cv2.waitKey(0)
 
