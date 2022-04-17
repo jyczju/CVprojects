@@ -1,5 +1,3 @@
-from unittest import result
-import numpy as np
 import cv2
 from otsu import otsu,threshold
 from dilate_and_erode import dilate,erode
