@@ -5,6 +5,7 @@ jyczju
 2022/4/17 v1.0
 '''
 import numpy as np
+import cv2
 
 def img_thin(img):
     '''
@@ -18,7 +19,7 @@ def img_thin(img):
     out[img > 0] = 1 # 将二值化图像转换为1和0
     out = 1-out # 取反
 
-    # i = 0 # 调试用  可以查看细化的过程
+    i = 0 # 调试用  可以查看细化的过程
     while True:
         delet_node1 = []
         delet_node2 = [] # 创建删除点list
@@ -50,11 +51,11 @@ def img_thin(img):
             out[node] = 0 # 将删除点设置为0
         
         # 调试用  可以查看细化的过程
-        # tmp = out.copy()
-        # tmp = 1-tmp
-        # tmp = tmp.astype(np.uint8) * 255
-        # cv2.imwrite('./results/'+str(i)+'.png', tmp)
-        # i += 1
+        tmp = out.copy()
+        tmp = 1-tmp
+        tmp = tmp.astype(np.uint8) * 255
+        cv2.imwrite('./results/'+str(i)+'.png', tmp)
+        i += 1
 
         if len(delet_node1) ==0 and len(delet_node2) == 0: # 如果没有点再满足标记删除的条件，则退出循环
             break

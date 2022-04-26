@@ -174,16 +174,16 @@ if __name__ == '__main__':
     sys.setrecursionlimit(100000) # 设置最大允许递归深度
 
     # img = cv2.imread('zjui_logo.png', 0) # 读入图像
-    # img = cv2.imread('zju_logo.png', 0) # 读入图像
+    img = cv2.imread('zju_logo.png', 0) # 读入图像
     # img = cv2.imread('zju_logo_gauss.png', 0) # 读入图像
-    img = cv2.imread('zjui_logo_gauss.png', 0) # 读入图像
+    # img = cv2.imread('zjui_logo_gauss.png', 0) # 读入图像
     # img = cv2.imread('zju_logo_uneven.png', 0) # 读入图像
     # img = cv2.imread('zjui_logo_uneven.png', 0) # 读入图像
     origin_img = img.copy() # 备份原始图像
     # cv2.imshow('origin_img', origin_img)
 
     region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 5.0 # 区域分裂合并
-    cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
+    # cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
     cv2.imwrite('draw_img.png', draw_img)
 
     # cv2.imshow('region_img', region_img) # 显示区域合并结果
