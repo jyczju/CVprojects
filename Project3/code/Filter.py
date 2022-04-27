@@ -21,7 +21,6 @@ def add_noise_Guass(img, mean=0, var=30**2):
     img_guass = np.uint8(img_guass)
     return img_guass
 
-
 def add_noise_SP(img, SNR=0.6):
     '''
     添加椒盐噪声
@@ -45,13 +44,14 @@ def mean_Filter(img, size=(5,5)):
     输出：均值滤波后的图像
     '''
     kernal = np.ones(size, np.float32)/size[0]/size[1] # 模板
+    img_results = img.copy()
     h = img.shape[0]
     w = img.shape[1]
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
             window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
-            img[x][y] = np.sum(window*kernal) # 对各点进行模板操作
-    return img
+            img_results[x][y] = np.sum(window*kernal) # 对各点进行模板操作
+    return img_results
 
 def mid_Filter(img, size=(5,5)):
     '''
@@ -59,21 +59,22 @@ def mid_Filter(img, size=(5,5)):
     输入：灰度图像，模板尺寸
     输出：中值滤波后的图像
     '''
+    img_results = img.copy()
     h = img.shape[0]
     w = img.shape[1]
     for x in range(int((size[0]-1)/2),int(h-(size[0]-1)/2)):
         for y in range(int((size[1]-1)/2),int(w-(size[1]-1)/2)):
             window = img[int(x-(size[0]-1)/2):int(x+(size[0]-1)/2+1),int(y-(size[1]-1)/2):int(y+(size[1]-1)/2+1)] # 当前操作窗口
-            img[x][y] = np.median(window) # 对各点进行模板操作
-    return img
+            img_results[x][y] = np.median(window) # 对各点进行模板操作
+    return img_results
 
-    
 def bf_Filter(img, size=(5,5), sigma_s = 10, sigma_r = 10):
     '''
     双边滤波
     输入：灰度图像，模板尺寸，空间域方差，像素值域方差
     输出：双边滤波后的图像
     '''
+    img_results = img.copy()
     kernal = np.ones(size, np.float32) # 模板初始化
     h = img.shape[0]
     w = img.shape[1]
@@ -86,8 +87,8 @@ def bf_Filter(img, size=(5,5), sigma_s = 10, sigma_r = 10):
                     dValue = ((float(window[i][j]) - float(window[int((window.shape[0]-1)/2)][int((window.shape[1]-1)/2)]))**2)/2/sigma_r
                     kernal[i][j] = math.exp(-dist)*math.exp(-dValue) # 计算模板权重
             kernal /= np.sum(kernal) # 权重归一化
-            img[x][y] = np.sum(window*kernal) # 对各点进行模板操作
-    return img
+            img_results[x][y] = np.sum(window*kernal) # 对各点进行模板操作
+    return img_results
 
 # def gaus_kernel(winsize, gsigma):
 #     r = int(winsize/2)
@@ -129,7 +130,6 @@ def bf_Filter(img, size=(5,5), sigma_s = 10, sigma_r = 10):
 #             for m in range(-r, r+1):
 #                 for n in range(-c, c+1):    
 #                     bilater_image[i][j] =  image[i+m][j+n] * kernel[m+r][n+c] + bilater_image[i][j] 
- 
 #     return bilater_image
 
 
