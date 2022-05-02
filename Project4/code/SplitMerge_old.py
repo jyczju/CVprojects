@@ -38,15 +38,16 @@ def extract_contour(region_img):
 
     for h in range(1,region_img.shape[0]-1):
         for w in range(1,region_img.shape[1]-1): # 遍历图像中的每一点
-            if np.sum(region_img[h-1:h+2, w-1:w+2]) == 0: # 如果该点为黑色且周围全为白色，则认为该点为轮廓，8邻域
-            # if region_img[h][w] == 0 and region_img[h-1][w] == 0 and region_img[h+1][w] == 0 and region_img[h][w-1] == 0 and region_img[h][w+1] == 0: #4邻域
+            # if region_img[h][w] == 0 and region_img[h-1][w] == 0 and region_img[h+1][w] == 0 and region_img[h][w-1] == 0 and region_img[h][w+1] == 0 and region_img[h-1][w-1] == 0 and region_img[h-1][w+1] == 0 and region_img[h+1][w-1] == 0 and region_img[h+1][w+1] == 0: # 如果该点为黑色且周围全为白色，则认为该点为轮廓
+            # if np.sum(region_img[h-1:h+2, w-1:w+2]) == 0: # 如果该点为黑色且周围全为白色，则认为该点为轮廓
+            if region_img[h][w] == 0 and region_img[h-1][w] == 0 and region_img[h+1][w] == 0 and region_img[h][w-1] == 0 and region_img[h][w+1] == 0:
                 contour_img[h][w] = 255 # 若像素本身及其周围像素均为黑色，则其为内部点，将其置为白色
     return contour_img
 
-def track_contour(img, start_point, all_cnts):
+def track_contour(img, start_point):
     '''
     轮廓跟踪
-    输入：边界图像，当前轮廓起始点，已被跟踪的轮廓点集合
+    输入：边界图像，当前轮廓起始点
     输出：当前轮廓freeman链码
     '''
     neibor = [(0, 1), (-1, 1), (-1, 0), (-1, -1), (0, -1), (1, -1), (1, 0), (1, 1)]  # 8连通方向码
@@ -63,6 +64,7 @@ def track_contour(img, start_point, all_cnts):
     while True:  # 轮廓扫描循环
         # print('current_point',current_point)
         while img[neibor_point[0], neibor_point[1]] != 0:  # 邻点不是边界点
+        # while not (img[neibor_point[0], neibor_point[1]] == 0 and np.sum(img[neibor_point[0]-1:neibor_point[0]+2, neibor_point[1]:neibor_point[1]+2])>=255):  # 邻点不是边界点
             dir += 1  # 逆时针旋转45度进行搜索
             if dir >= 8:
                 dir -= 8
@@ -73,10 +75,6 @@ def track_contour(img, start_point, all_cnts):
 
         else:  
             current_point = neibor_point # 将符合条件的邻域点设为当前点进行下一次的边界点搜索
-
-            if current_point in all_cnts: # 如果当前点已经在轮廓中，则轮廓结束
-                return freeman
-            
             freeman.append(dir) # 将当前方向码加入轮廓方向码list
             if (dir % 2) == 0:
                 dir += 7
@@ -91,6 +89,7 @@ def track_contour(img, start_point, all_cnts):
 
         if current_point == start_point:
             break # 当搜索点回到起始点，搜索结束，退出循环
+
 
     return freeman
 
@@ -113,9 +112,12 @@ def find_start_point(img, all_cnts):
     '''
     start_point = (-1, -1) # 初始化起始点
 
+
     # 寻找起始点
     for i in range(img.shape[0]):
         for j in range(img.shape[1]):
+            # if (i,j) in all_cnts:
+            #     print("yes")
             if img[i, j] == 0 and (i, j) not in all_cnts: # 点为黑色且不在已识别到的轮廓list中
                 start_point = (i, j) # 找到新的起始点
                 break
@@ -136,25 +138,26 @@ def find_cnts(img):
 
     while True:
         start_point = find_start_point(img, all_cnts) # 寻找当前边界的轮廓起始点
+        # print('start point:', start_point)
 
         if start_point == (-1, -1): # 若找不到新的起始点，则说明所有的轮廓点都已被找到，退出循环
             break
 
-        freeman = track_contour(img, start_point, all_cnts) # 寻找当前边界的轮廓
+        freeman = track_contour(img, start_point) # 寻找当前边界的轮廓
+        # print(freeman)
         contours = freeman2contour(freeman) # 将轮廓方向码转换为轮廓链码
+        # print(contours)
         
         cnts.append(contours) # 将找到的轮廓加入轮廓集合中
         freemans.append(freeman) # 将找到的轮廓方向码加入轮廓方向码集合中
 
         all_cnts = all_cnts + contours # 将找到的轮廓点加入轮廓点集合中
-    
-    # 去掉短轮廓（干扰轮廓）
-    fms = []
-    for fm in freemans:
-        if len(fm) >= 10:
-            fms.append(fm)
+        # for cnt in contours:
+        #     for i in range(-10,11):
+        #         for j in range(-10,11):
+        #             all_cnts.append((cnt[0]+i, cnt[1]+j))
 
-    return fms
+    return freemans
 
 def draw_cnts(cntlists, img, color=(0, 0, 255), mode='freeman'):
     '''
@@ -211,17 +214,22 @@ def contour2freeman(cnt):
     freeman = [] # 初始化轮廓方向码
     for i in range(len(cnt)-1):
         freeman.append(neibor.index(tuple(np.array(cnt[i+1]) - np.array(cnt[i]))))
+
+        # for j in range(len(neibor)):
+        #     if tuple(np.array(cnt[i+1]) - np.array(cnt[i])) == neibor[j]:
+        #         freeman.append(j)
+        #         break
     return freeman
 
 
 if __name__ == '__main__':
     sys.setrecursionlimit(100000) # 设置最大允许递归深度
-    # read_path = 'zju_logo.png' # 设置读取图像的路径
-    # read_path = 'zjui_logo.png' # 设置读取图像的路径
-    # read_path = 'zju_logo_gauss.png' # 设置读取图像的路径
-    # read_path = 'zjui_logo_gauss.png' # 设置读取图像的路径
-    # read_path = 'zju_logo_uneven.png' # 设置读取图像的路径
-    read_path = 'zjui_logo_uneven.png' # 设置读取图像的路径
+    read_path = 'zju_logo.png' # 设置读取图像的路径
+    # img = cv2.imread('zjui_logo.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo_gauss.png', 0) # 读入图像
+    # img = cv2.imread('zjui_logo_gauss.png', 0) # 读入图像
+    # img = cv2.imread('zju_logo_uneven.png', 0) # 读入图像
+    # img = cv2.imread('zjui_logo_uneven.png', 0) # 读入图像
 
     save_path = read_path[:-4]+'_results.png' # 设置保存图像的路径
 
@@ -232,22 +240,27 @@ if __name__ == '__main__':
     origin_img = img.copy() # 备份原始图像
     # cv2.imshow('origin_img', origin_img)
 
+
+
+
     region_img,draw_img = region_split_merge(img, min_area=(1,1), threshold=5.0) # 5.0 # 区域分裂合并
-    # cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
+    cv2.imshow('draw_img', draw_img) # 显示区域分裂结果
     cv2.imwrite('draw_img.png', draw_img)
 
-    # cv2.imshow('region_img', region_img) # 显示区域合并结果
-    region_img[0:20, 0:450] = 255 # 将区域图像中的一部分置为白色
-    region_img[275:300, 0:450] = 255 # 将区域图像中的一部分置为白色
-    region_img[0:300, 445:450] = 255 # 将区域图像中的一部分置为白色
+    cv2.imshow('region_img', region_img) # 显示区域合并结果
+    # region_img[275:300, 0:450] = 255 # 将区域图像中的一部分置为白色
+    # region_img[0:300, 445:450] = 255 # 将区域图像中的一部分置为白色
 
     cv2.imwrite('region_img.png', region_img)
 
+
     contour_img = extract_contour(region_img) # 轮廓提取
-    # cv2.imshow('contour_img', contour_img) # 显示轮廓图像
+    cv2.imshow('contour_img', contour_img) # 显示轮廓图像
     cv2.imwrite('contour_img.png', contour_img) 
 
     freemans = find_cnts(contour_img) # 轮廓跟踪
+    freemans = [freemans[0]]
+    # freemans = find_cnts(region_img) # 轮廓跟踪
 
     print('freemans:')
     print(freemans)
@@ -255,7 +268,7 @@ if __name__ == '__main__':
     # img_cnt = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
     img_cnt = 255*np.ones([img.shape[0], img.shape[1], 3])
     img_cnt = draw_cnts(freemans, img_cnt, color = (0, 0, 255), mode='freeman') # 绘制轮廓跟踪结果
-    # cv2.imshow('img_cnt', img_cnt)
+    cv2.imshow('img_cnt', img_cnt)
     cv2.imwrite('img_cnt.png', img_cnt)
 
     cnts_filter = contours_filter(freemans, windows_size = 11) # 轮廓链码滤波
@@ -263,7 +276,7 @@ if __name__ == '__main__':
     # img_cnt_filter = cv2.cvtColor(origin_img, cv2.COLOR_GRAY2BGR)
     img_cnt_filter = 255*np.ones([img.shape[0], img.shape[1], 3])
     img_cnt_filter = draw_cnts(cnts_filter, img_cnt_filter, color=(255, 0, 0), mode='contour') # 绘制轮廓链码滤波结果
-    # cv2.imshow('img_cnt_filter', img_cnt_filter)
+    cv2.imshow('img_cnt_filter', img_cnt_filter)
     cv2.imwrite('img_cnt_filter.png', img_cnt_filter)    
 
     plt.figure(figsize=(9, 9.5))
