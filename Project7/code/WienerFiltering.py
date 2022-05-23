@@ -11,7 +11,7 @@ import cv2
 def cal_PSF(img_size, length, angle):
     '''
     计算点扩展函数
-    输入：图像尺寸，运动长度，运动角度(弧度)
+    输入：图像尺寸，运动长度，运动角度(弧度制)
     输出：点扩展函数
     '''
     PSF = np.zeros(img_size)  # 点扩展函数初始化
@@ -53,4 +53,25 @@ if __name__ == '__main__':
     f = f.astype(np.uint8) # 转换数据类型
 
     cv2.imwrite("restoreImage.png",f)
+
+    length = 15 # PSF长度
+    angle = 11 # PSF角度
+    angle = angle * math.pi / 180 # 角度转弧度
+
+    PSF = cal_PSF(g.shape, length, angle) # 计算点扩展函数
+    f = wiener_filter(g, PSF, K = 0.02) # 维纳滤波
+    f = f.astype(np.uint8) # 转换数据类型
+
+    cv2.imwrite("restoreImage1.png",f)
+
+    length = 30 # PSF长度
+    angle = 30 # PSF角度
+    angle = angle * math.pi / 180 # 角度转弧度
+
+    PSF = cal_PSF(g.shape, length, angle) # 计算点扩展函数
+    f = wiener_filter(g, PSF, K = 0.02) # 维纳滤波
+    f = f.astype(np.uint8) # 转换数据类型
+
+    cv2.imwrite("restoreImage2.png",f)
+    cv2.waitKey(0)
     cv2.waitKey(0)
