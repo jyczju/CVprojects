@@ -3,11 +3,13 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 
 origin_img1 = cv2.imread('origin_img1.jpg') # 读取图片
 origin_img2 = cv2.imread('origin_img2.jpg') # 读取图片
 
-numfeatures = 300 # 特征点数量
+start_time = time.time()
+numfeatures = 200 # 特征点数量
 orb = cv2.ORB_create(numfeatures) # 创建ORB对象
 kp1, des1 = orb.detectAndCompute(origin_img1, None) # 寻找关键点
 keypoint_img1 = cv2.drawKeypoints(origin_img1, kp1, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS) # 绘制关键点
@@ -15,31 +17,19 @@ keypoint_img1 = cv2.drawKeypoints(origin_img1, kp1, None, flags=cv2.DRAW_MATCHES
 kp2, des2 = orb.detectAndCompute(origin_img2, None) # 寻找关键点
 keypoint_img2 = cv2.drawKeypoints(origin_img2, kp2, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS) # 绘制关键点
 
+end_time = time.time()
+print('time:',end_time-start_time,'s')
+print('feature number:',len(kp1))
+
+# BFMatcher匹配
 bf = cv2.BFMatcher() # 创建BFMatcher对象
-matches = bf.knnMatch(des1,des2,k=1) # 使用knn进行计算匹配
-# 计算最大距离和最小距离
-m0 = matches[0][0]
-min_distance = m0.distance
-for x in matches:
-    if x[0].distance < min_distance:
-        min_distance = x[0].distance  
+matches = bf.knnMatch(des1,des2, k=2) # 使用knn进行计算匹配
 
-# print("min_distance:",min_distance)
-good = [] # 创建空列表
-for x in matches:
-    if x[0].distance <= 1.85 * min_distance: # 当描述符之间的距离大于1.85*最小距离时，认为匹配有误
-        good.append(x) # 将通过筛选的匹配点添加到good列表
-
-# # BFMatcher匹配
-# bf = cv2.BFMatcher()
-# matches = bf.knnMatch(des1,des2, k=2)
-
-# # 调整ratio
-# good = []
-# for m,n in matches:
-#     if m.distance < 0.9*n.distance: # 最近点距离小于0.75倍次近点距离
-#         good.append([m])
-
+# NNDR匹配
+good = []
+for m,n in matches:
+    if m.distance < 0.84*n.distance: # 最近点距离/次近点距离<0.84
+        good.append([m])
 
 match_img = cv2.drawMatchesKnn(origin_img1,kp1,origin_img2,kp2,good,None,flags=2) # 绘制匹配点
 

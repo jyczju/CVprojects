@@ -4,6 +4,7 @@
 import cv2
 import numpy as np
 import matplotlib.pyplot as plt
+import time
  
 origin_img1 = cv2.imread('origin_img1.jpg') # 读取图片
 origin_img2 = cv2.imread('origin_img2.jpg') # 读取图片
@@ -11,7 +12,8 @@ origin_img2 = cv2.imread('origin_img2.jpg') # 读取图片
 gray1 = cv2.cvtColor(origin_img1 , cv2.COLOR_BGR2GRAY) # 转换为灰度图
 gray2 = cv2.cvtColor(origin_img2 , cv2.COLOR_BGR2GRAY) # 转换为灰度图
 
-HessianThreshold = 5500 # 设置阈值
+start_time = time.time()
+HessianThreshold = 3400 # 设置阈值
 surf = cv2.xfeatures2d.SURF_create(HessianThreshold) # 创建SURF对象
 kp1, des1 = surf.detectAndCompute(gray1, None) # 计算SURF特征点和描述符
 keypoint_img1 = cv2.drawKeypoints(origin_img1, kp1, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS) # 绘制关键点
@@ -19,31 +21,19 @@ keypoint_img1 = cv2.drawKeypoints(origin_img1, kp1, None, flags=cv2.DRAW_MATCHES
 kp2, des2 = surf.detectAndCompute(gray2, None) # 计算SURF特征点和描述符
 keypoint_img2 = cv2.drawKeypoints(origin_img2, kp2, None, flags=cv2.DRAW_MATCHES_FLAGS_DRAW_RICH_KEYPOINTS) # 绘制关键点
 
-# # BFMatcher匹配
-# bf = cv2.BFMatcher()
-# matches = bf.knnMatch(des1,des2, k=2)
+end_time = time.time()
+print('time:',end_time-start_time,'s')
+print('feature number:',len(kp1))
 
-# # 调整ratio
-# good = []
-# for m,n in matches:
-#     if m.distance < 0.95*n.distance: # 最近点距离小于0.75倍次近点距离
-#         good.append([m])
-
-
+# BFMatcher匹配
 bf = cv2.BFMatcher() # 创建BFMatcher对象
-matches = bf.knnMatch(des1,des2,k=1) # 使用knn进行计算匹配
-# 计算最大距离和最小距离
-m0 = matches[0][0]
-min_distance = m0.distance
-for x in matches:
-    if x[0].distance < min_distance:
-        min_distance = x[0].distance  
+matches = bf.knnMatch(des1,des2, k=2) # 使用knn进行计算匹配
 
-# print("min_distance:",min_distance)
+# NNDR匹配
 good = []
-for x in matches:
-    if x[0].distance <= 2.3 * min_distance: # 当描述符之间的距离大于2.3*最小距离时，认为匹配有误
-        good.append(x) # 将通过筛选的匹配点添加到good列表
+for m,n in matches:
+    if m.distance < 0.85*n.distance: # 最近点距离/次近点距离<0.85
+        good.append([m])
 
 match_img = cv2.drawMatchesKnn(origin_img1,kp1,origin_img2,kp2,good,None,flags=2) # 绘制匹配点
 
