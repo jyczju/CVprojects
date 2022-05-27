@@ -3,7 +3,8 @@
 import cv2
 import matplotlib.pyplot as plt
 
-origin_img1 = cv2.imread('origin_img1.jpg') # 读取图片
+# origin_img1 = cv2.imread('origin_img1.jpg') # 读取图片
+origin_img1 = cv2.imread('ygg_img.jpg') # 读取图片
 
 numfeatures1 = 100 # 设置特征点数量
 orb = cv2.ORB_create(numfeatures1) # 创建ORB对象

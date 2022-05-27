@@ -41,6 +41,7 @@ keypoint_img1 = cv2.cvtColor(keypoint_img1, cv2.COLOR_BGR2RGB) # 转换为RGB图
 keypoint_img2 = cv2.cvtColor(keypoint_img2, cv2.COLOR_BGR2RGB) # 转换为RGB图
 
 # 绘制结果
+plt.figure(figsize=(9,7))
 plt.subplot(121)
 plt.imshow(keypoint_img1)
 plt.title('origin_img1 (Hessian Threshold: %d)' % HessianThreshold)
@@ -50,7 +51,9 @@ plt.subplot(122)
 plt.imshow(keypoint_img2)
 plt.title('origin_img2 (Hessian Threshold: %d)' % HessianThreshold)
 plt.axis('off')
+plt.savefig('surf_detect.png')
 plt.show()
 
 cv2.imshow('match_img', match_img)
+cv2.imwrite('surf_match.png', match_img)
 cv2.waitKey(0)
